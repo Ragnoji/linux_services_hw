@@ -1,11 +1,13 @@
 import socket
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from threading import Thread
 
 
 def handle_connection(connection):
     try:
-        connection.send(datetime.now().strftime("%d.%m.%Y %H:%M").encode('utf-8'))
+        timezone_offset = 3.0
+        tzinfo = timezone(timedelta(hours=timezone_offset))
+        connection.send(datetime.now(tzinfo).strftime("%d.%m.%Y %H:%M").encode('utf-8'))
         connection.close()
     except Exception:
         return
@@ -21,5 +23,9 @@ if __name__ == '__main__':
     sock.listen(8)
 
     while True:
-        conn_pair = sock.accept()
-        Thread(target=handle_connection, args=(conn_pair[0],)).start()
+        try:
+            conn_pair = sock.accept()
+            Thread(target=handle_connection, args=(conn_pair[0],)).start()
+        except KeyboardInterrupt:
+            sock.close()
+            break
